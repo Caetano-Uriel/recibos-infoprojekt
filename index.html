@@ -1,0 +1,935 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Recibo de Pagamento — Info Projekt</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --red: #c0392b;
+    --red-dark: #a93226;
+    --red-light: #fdecea;
+    --bg: #f4f4f2;
+    --surface: #ffffff;
+    --border: #e0ddd8;
+    --text: #1a1a18;
+    --muted: #6b6b68;
+    --hint: #a0a09d;
+    --radius: 10px;
+    --radius-lg: 14px;
+  }
+  html { background: var(--bg); }
+  body {
+    font-family: 'DM Sans', sans-serif;
+    color: var(--text);
+    min-height: 100vh;
+    padding: 0;
+  }
+
+  /* ── Top bar ── */
+  .topbar {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 0 2rem;
+    height: 56px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .topbar-brand { display: flex; align-items: center; gap: 10px; }
+  .topbar-logo {
+    width: 32px; height: 32px;
+    background: var(--red);
+    border-radius: 7px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; font-weight: 700; color: #fff; letter-spacing: -0.5px;
+  }
+  .topbar-name { font-size: 15px; font-weight: 600; color: var(--red); letter-spacing: 0.5px; }
+  .topbar-actions { display: flex; gap: 8px; }
+
+  /* ── Buttons ── */
+  .btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 7px 15px;
+    border-radius: var(--radius);
+    font-size: 13px; font-weight: 500;
+    cursor: pointer;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text);
+    transition: background .15s, border-color .15s;
+    text-decoration: none;
+    font-family: 'DM Sans', sans-serif;
+  }
+  .btn:hover { background: #f0efec; }
+  .btn.danger { border-color: #f5b7b1; color: var(--red); }
+  .btn.danger:hover { background: var(--red-light); }
+  .btn.primary { background: var(--red); color: #fff; border-color: var(--red); }
+  .btn.primary:hover { background: var(--red-dark); }
+  .btn i { font-size: 16px; }
+
+  /* ── Layout ── */
+  .app { display: grid; grid-template-columns: 260px 1fr; min-height: calc(100vh - 56px); }
+
+  /* ── Sidebar ── */
+  .sidebar {
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    padding: 1.5rem 1rem;
+    display: flex; flex-direction: column; gap: 6px;
+  }
+  .sidebar-label {
+    font-size: 10px; letter-spacing: 1.2px; text-transform: uppercase;
+    color: var(--hint); padding: 0 8px; margin: 12px 0 4px;
+  }
+  .sidebar-label:first-child { margin-top: 0; }
+  .nav-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 9px 10px; border-radius: 8px;
+    font-size: 13px; font-weight: 500; color: var(--muted);
+    cursor: pointer; transition: all .15s; border: none; background: none;
+    width: 100%; text-align: left; font-family: 'DM Sans', sans-serif;
+  }
+  .nav-item i { font-size: 18px; }
+  .nav-item:hover { background: var(--bg); color: var(--text); }
+  .nav-item.active { background: var(--red-light); color: var(--red); }
+  .nav-item .badge {
+    margin-left: auto;
+    background: var(--red); color: #fff;
+    border-radius: 20px; font-size: 10px; font-weight: 600;
+    padding: 2px 7px; min-width: 20px; text-align: center;
+  }
+  .sidebar-footer {
+    margin-top: auto;
+    padding: 12px 8px 0;
+    border-top: 1px solid var(--border);
+    font-size: 12px; color: var(--hint);
+    line-height: 1.7;
+  }
+
+  /* ── Main content ── */
+  .main { padding: 2rem; background: var(--bg); }
+
+  /* ── Views ── */
+  .view { display: none; }
+  .view.active { display: block; }
+
+  /* ── Page header ── */
+  .page-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 1.5rem;
+  }
+  .page-header h1 { font-size: 20px; font-weight: 600; }
+  .page-header p { font-size: 13px; color: var(--muted); margin-top: 2px; }
+
+  /* ── Stats cards ── */
+  .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 1.5rem; }
+  .stat-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius-lg); padding: 1rem 1.25rem;
+  }
+  .stat-card .label { font-size: 11px; color: var(--hint); text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 6px; }
+  .stat-card .value { font-size: 22px; font-weight: 600; font-family: 'DM Mono', monospace; }
+  .stat-card .value.red { color: var(--red); }
+  .stat-card .sub { font-size: 12px; color: var(--muted); margin-top: 4px; }
+
+  /* ── History table ── */
+  .card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius-lg); overflow: hidden;
+  }
+  .card-header {
+    padding: 1rem 1.25rem;
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .card-header h2 { font-size: 14px; font-weight: 600; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  thead th {
+    text-align: left; padding: 10px 16px;
+    font-size: 10px; letter-spacing: 0.8px; text-transform: uppercase;
+    color: var(--hint); border-bottom: 1px solid var(--border);
+    font-weight: 500;
+  }
+  tbody tr { border-bottom: 1px solid var(--border); transition: background .1s; cursor: pointer; }
+  tbody tr:last-child { border-bottom: none; }
+  tbody tr:hover { background: var(--bg); }
+  tbody td { padding: 12px 16px; color: var(--text); }
+  .pill {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 500;
+  }
+  .pill.pago { background: #e8f5e9; color: #2e7d32; }
+  .pill.pendente { background: #fff8e1; color: #b8860b; }
+  .pill.cancelado { background: #fce4ec; color: #c62828; }
+  .empty-state {
+    text-align: center; padding: 3rem 1rem;
+    color: var(--hint); font-size: 14px;
+  }
+  .empty-state i { font-size: 36px; display: block; margin-bottom: 12px; opacity: .4; }
+
+  /* ── Receipt form ── */
+  .receipt-grid { display: grid; grid-template-columns: 1fr 340px; gap: 1.5rem; align-items: start; }
+
+  .doc {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius-lg); overflow: hidden;
+  }
+  .doc-header {
+    display: grid; grid-template-columns: auto 1fr auto;
+    align-items: center; gap: 1.5rem;
+    padding: 1.5rem 2rem;
+    border-bottom: 3px solid var(--red);
+  }
+  .doc-logo-box { display: flex; align-items: center; gap: 10px; }
+  .doc-logo-icon {
+    width: 46px; height: 46px; background: var(--red);
+    border-radius: 8px; display: flex; align-items: center; justify-content: center;
+    font-size: 18px; font-weight: 700; color: #fff; letter-spacing: -0.5px;
+  }
+  .doc-logo-name { font-size: 16px; font-weight: 700; color: var(--red); letter-spacing: 1px; }
+  .doc-logo-sub { font-size: 11px; color: var(--muted); }
+  .doc-title { text-align: center; }
+  .doc-title-label { font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); }
+  .doc-title-num { font-size: 20px; font-weight: 600; font-family: 'DM Mono', monospace; color: var(--red); }
+  .doc-company { text-align: right; font-size: 11.5px; color: var(--muted); line-height: 1.8; }
+  .doc-company strong { color: var(--text); font-weight: 500; }
+
+  .doc-meta {
+    display: grid; grid-template-columns: 1fr 1fr 1fr;
+    gap: 1rem; padding: 1.25rem 2rem;
+    background: #fafaf8; border-bottom: 1px solid var(--border);
+  }
+  .field label {
+    font-size: 10px; letter-spacing: 0.8px; text-transform: uppercase;
+    color: var(--hint); display: block; margin-bottom: 4px;
+  }
+  .field input, .field select {
+    width: 100%; background: transparent; border: none;
+    border-bottom: 1px solid var(--border);
+    padding: 4px 0; font-size: 13.5px;
+    font-family: 'DM Sans', sans-serif; color: var(--text); outline: none;
+  }
+  .field input:focus, .field select:focus { border-color: var(--red); }
+
+  .table-section { padding: 1.5rem 2rem; }
+  .table-head {
+    display: grid; grid-template-columns: 28px 50px 1fr 110px 96px 96px;
+    gap: 0;
+  }
+  .th {
+    font-size: 10px; letter-spacing: 0.8px; text-transform: uppercase;
+    color: var(--hint); padding: 8px 8px; border-bottom: 1px solid var(--border);
+    font-weight: 500;
+  }
+  .th.r { text-align: right; }
+  .item-row {
+    display: grid; grid-template-columns: 28px 50px 1fr 110px 96px 96px;
+    gap: 0; border-bottom: 1px solid var(--border);
+  }
+  .item-row:last-child { border-bottom: none; }
+  .td { padding: 9px 8px; font-size: 13px; display: flex; align-items: center; }
+  .td.r { justify-content: flex-end; }
+  .td.c { justify-content: center; }
+  .td input {
+    width: 100%; background: transparent; border: none;
+    font-size: 13px; font-family: 'DM Sans', monospace; color: var(--text); outline: none;
+  }
+  .td input:focus { border-bottom: 1px solid var(--red); }
+  .td input[type=number] { -moz-appearance: textfield; }
+  .td input[type=number]::-webkit-outer-spin-button,
+  .td input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; }
+  .row-total { font-family: 'DM Mono', monospace; font-size: 13px; }
+  .del-btn {
+    width: 22px; height: 22px; border-radius: 50%;
+    border: none; background: none; color: var(--hint);
+    cursor: pointer; font-size: 14px;
+    display: flex; align-items: center; justify-content: center;
+    transition: all .15s; padding: 0;
+  }
+  .del-btn:hover { background: var(--red-light); color: var(--red); }
+  .add-row-btn {
+    display: flex; align-items: center; gap: 6px;
+    margin-top: 1rem; padding: 8px 10px;
+    font-size: 12px; color: var(--hint); cursor: pointer;
+    border: 1px dashed var(--border); border-radius: var(--radius);
+    background: none; width: 100%; transition: all .15s;
+    font-family: 'DM Sans', sans-serif;
+  }
+  .add-row-btn:hover { color: var(--red); border-color: var(--red); background: var(--red-light); }
+
+  .doc-footer {
+    display: grid; grid-template-columns: 1fr auto;
+    gap: 2rem; padding: 1.5rem 2rem;
+    border-top: 1px solid var(--border);
+  }
+  .section-label {
+    font-size: 10px; letter-spacing: 0.8px; text-transform: uppercase;
+    color: var(--hint); display: block; margin-bottom: 10px;
+  }
+  .pay-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 1rem; }
+  .pay-chip {
+    display: flex; align-items: center; gap: 5px;
+    padding: 5px 11px; border-radius: 20px;
+    border: 1px solid var(--border); font-size: 12px;
+    cursor: pointer; transition: all .15s; user-select: none;
+    font-family: 'DM Sans', sans-serif; background: var(--surface);
+    color: var(--muted);
+  }
+  .pay-chip.on { background: var(--red); color: #fff; border-color: var(--red); }
+  .pay-chip:not(.on):hover { border-color: var(--red); color: var(--red); }
+  textarea.obs {
+    width: 100%; background: #fafaf8;
+    border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 10px 12px; font-size: 13px;
+    font-family: 'DM Sans', sans-serif; color: var(--text);
+    resize: vertical; outline: none; min-height: 68px;
+  }
+  textarea.obs:focus { border-color: var(--red); }
+  .totals { text-align: right; min-width: 190px; }
+  .totals .sub-row {
+    display: flex; justify-content: space-between;
+    font-size: 12px; color: var(--muted); margin-bottom: 5px;
+  }
+  .totals .grand {
+    display: flex; justify-content: space-between; align-items: baseline;
+    margin-top: 10px; padding-top: 10px; border-top: 2px solid var(--red);
+  }
+  .totals .grand-label { font-size: 11px; letter-spacing: 1px; text-transform: uppercase; color: var(--red); font-weight: 500; }
+  .totals .grand-value { font-size: 24px; font-weight: 600; font-family: 'DM Mono', monospace; color: var(--red); }
+
+  .doc-stamp {
+    padding: 10px 2rem;
+    background: #fafaf8; border-top: 1px solid var(--border);
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .stamp-text { font-size: 11px; color: var(--hint); }
+  .status-pill {
+    padding: 4px 12px; border-radius: 20px;
+    font-size: 11px; font-weight: 500; border: 1px solid; cursor: pointer;
+    transition: all .15s; font-family: 'DM Sans', sans-serif;
+  }
+  .status-pill.pendente { background: #fff8e1; color: #b8860b; border-color: #d4aa35; }
+  .status-pill.pago { background: #e8f5e9; color: #2e7d32; border-color: #4caf50; }
+
+  /* ── Right panel ── */
+  .panel { display: flex; flex-direction: column; gap: 1rem; }
+  .panel-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius-lg); padding: 1.25rem;
+  }
+  .panel-card h3 { font-size: 13px; font-weight: 600; margin-bottom: 12px; }
+  .action-list { display: flex; flex-direction: column; gap: 8px; }
+  .action-list .btn { justify-content: flex-start; width: 100%; }
+  .info-row { display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 8px; color: var(--muted); }
+  .info-row span:last-child { color: var(--text); font-weight: 500; }
+  .tip {
+    background: #fff8e1; border: 1px solid #f0d06a;
+    border-radius: 8px; padding: 10px 12px;
+    font-size: 12px; color: #7a5c00; line-height: 1.6;
+  }
+  .tip i { vertical-align: -2px; margin-right: 4px; }
+
+  /* ── Numeração ── */
+  .num-field {
+    display: flex; gap: 6px; align-items: center;
+  }
+  .num-field input {
+    width: 80px; padding: 6px 8px; border: 1px solid var(--border);
+    border-radius: 6px; font-size: 13px; font-family: 'DM Mono', monospace;
+    background: var(--surface); color: var(--text); outline: none;
+    text-align: center;
+  }
+  .num-field input:focus { border-color: var(--red); }
+
+  /* Print */
+  @media print {
+    .topbar, .sidebar, .topbar-actions, .panel, .add-row-btn, .del-btn, .page-header .btn { display: none !important; }
+    .app { grid-template-columns: 1fr; }
+    .main { padding: 0; background: white; }
+    .receipt-grid { grid-template-columns: 1fr; }
+    .doc { border: none; border-radius: 0; box-shadow: none; }
+    .view { display: block !important; }
+    .view:not(#view-novo) { display: none !important; }
+    .page-header { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<header class="topbar">
+  <div class="topbar-brand">
+    <div class="topbar-logo">iP</div>
+    <span class="topbar-name">INFO PROJEKT</span>
+    <span style="font-size:12px;color:#a0a09d;margin-left:6px">— Sistema de Recibos</span>
+  </div>
+  <div class="topbar-actions">
+    <button class="btn primary" onclick="showView('novo'); novoRecibo()">
+      <i class="ti ti-plus"></i> Novo Recibo
+    </button>
+  </div>
+</header>
+
+<div class="app">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <span class="sidebar-label">Menu</span>
+    <button class="nav-item active" id="nav-dashboard" onclick="showView('dashboard')">
+      <i class="ti ti-layout-dashboard"></i> Dashboard
+    </button>
+    <button class="nav-item" id="nav-historico" onclick="showView('historico')">
+      <i class="ti ti-receipt-2"></i> Histórico
+      <span class="badge" id="badge-count">0</span>
+    </button>
+    <button class="nav-item" id="nav-novo" onclick="showView('novo'); novoRecibo()">
+      <i class="ti ti-file-plus"></i> Novo Recibo
+    </button>
+
+    <span class="sidebar-label" style="margin-top:1.5rem">Configurações</span>
+    <button class="nav-item" onclick="showView('config')">
+      <i class="ti ti-settings"></i> Empresa
+    </button>
+
+    <div class="sidebar-footer">
+      <strong>Info Projekt</strong><br>
+      CNPJ 02.410.966/0001-22<br>
+      (33) 3721-1726
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main">
+
+    <!-- ── DASHBOARD ── -->
+    <div class="view active" id="view-dashboard">
+      <div class="page-header">
+        <div>
+          <h1>Dashboard</h1>
+          <p>Resumo dos recibos emitidos</p>
+        </div>
+      </div>
+      <div class="stats">
+        <div class="stat-card">
+          <div class="label">Total emitido</div>
+          <div class="value red" id="stat-total">R$ 0,00</div>
+          <div class="sub" id="stat-total-sub">0 recibos</div>
+        </div>
+        <div class="stat-card">
+          <div class="label">Recebido (pago)</div>
+          <div class="value" id="stat-pago">R$ 0,00</div>
+          <div class="sub" id="stat-pago-sub">0 recibos</div>
+        </div>
+        <div class="stat-card">
+          <div class="label">Pendente</div>
+          <div class="value" id="stat-pend">R$ 0,00</div>
+          <div class="sub" id="stat-pend-sub">0 recibos</div>
+        </div>
+        <div class="stat-card">
+          <div class="label">Último número</div>
+          <div class="value" id="stat-num" style="font-family:'DM Mono',monospace">—</div>
+          <div class="sub">Próximo a emitir</div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <h2>Recibos recentes</h2>
+          <button class="btn" onclick="showView('historico')"><i class="ti ti-list"></i> Ver todos</button>
+        </div>
+        <div id="dashboard-list"></div>
+      </div>
+    </div>
+
+    <!-- ── HISTÓRICO ── -->
+    <div class="view" id="view-historico">
+      <div class="page-header">
+        <div>
+          <h1>Histórico de Recibos</h1>
+          <p>Todos os recibos gerados</p>
+        </div>
+        <button class="btn primary" onclick="showView('novo'); novoRecibo()">
+          <i class="ti ti-plus"></i> Novo Recibo
+        </button>
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <h2>Todos os recibos</h2>
+          <input type="search" id="search-input" placeholder="Buscar cliente..." oninput="renderHistorico()"
+            style="padding:6px 10px;border:1px solid var(--border);border-radius:7px;font-size:13px;font-family:'DM Sans',sans-serif;outline:none;width:200px">
+        </div>
+        <div id="historico-list"></div>
+      </div>
+    </div>
+
+    <!-- ── NOVO RECIBO ── -->
+    <div class="view" id="view-novo">
+      <div class="page-header">
+        <div>
+          <h1>Novo Recibo</h1>
+          <p>Preencha os dados e salve ou imprima</p>
+        </div>
+      </div>
+      <div class="receipt-grid">
+
+        <!-- DOC -->
+        <div class="doc" id="doc-print">
+          <div class="doc-header">
+            <div class="doc-logo-box">
+              <div class="doc-logo-icon">iP</div>
+              <div>
+                <div class="doc-logo-name">INFO PROJEKT</div>
+                <div class="doc-logo-sub">Provedor de Internet</div>
+              </div>
+            </div>
+            <div class="doc-title">
+              <div class="doc-title-label">Recibo de pagamento</div>
+              <div class="doc-title-num" id="doc-num">Nº —</div>
+            </div>
+            <div class="doc-company">
+              <strong>CNPJ:</strong> 02.410.966/0001-22<br>
+              Praça Dr. Hélio Rocha Guimarães, 101<br>
+              Centro — (33) 3721-1726<br>
+              info.provedor@ipw.com.br
+            </div>
+          </div>
+
+          <div class="doc-meta">
+            <div class="field">
+              <label>Data</label>
+              <input type="date" id="f-data">
+            </div>
+            <div class="field">
+              <label>Cliente</label>
+              <input type="text" id="f-cliente" placeholder="Nome completo">
+            </div>
+            <div class="field">
+              <label>Endereço / Contrato</label>
+              <input type="text" id="f-end" placeholder="Endereço ou nº contrato">
+            </div>
+          </div>
+
+          <div class="table-section">
+            <div class="table-head">
+              <div class="th"></div>
+              <div class="th">Qtd</div>
+              <div class="th">Serviço / Produto</div>
+              <div class="th r">P. Unitário</div>
+              <div class="th r">Desconto</div>
+              <div class="th r">Total</div>
+            </div>
+            <div id="items-body"></div>
+            <button class="add-row-btn" onclick="addItem()">
+              <i class="ti ti-plus"></i> Adicionar linha
+            </button>
+          </div>
+
+          <div class="doc-footer">
+            <div>
+              <span class="section-label">Forma de pagamento</span>
+              <div class="pay-chips">
+                <div class="pay-chip" data-v="Dinheiro" onclick="this.classList.toggle('on')"><i class="ti ti-cash"></i> Dinheiro</div>
+                <div class="pay-chip" data-v="Pix" onclick="this.classList.toggle('on')"><i class="ti ti-qrcode"></i> Pix</div>
+                <div class="pay-chip" data-v="Cartão" onclick="this.classList.toggle('on')"><i class="ti ti-credit-card"></i> Cartão</div>
+                <div class="pay-chip" data-v="Boleto" onclick="this.classList.toggle('on')"><i class="ti ti-file-invoice"></i> Boleto</div>
+                <div class="pay-chip" data-v="Link" onclick="this.classList.toggle('on')"><i class="ti ti-link"></i> Link</div>
+              </div>
+              <span class="section-label">Observações / Negociação</span>
+              <textarea class="obs" id="f-obs" placeholder="Ex: Entrada de R$ 50,00 + restante em 2x no cartão..."></textarea>
+            </div>
+            <div class="totals">
+              <div class="sub-row"><span>Subtotal</span><span id="t-sub">R$ 0,00</span></div>
+              <div class="sub-row"><span>Descontos</span><span id="t-desc" style="color:var(--red)">– R$ 0,00</span></div>
+              <div class="grand">
+                <span class="grand-label">Total</span>
+                <span class="grand-value" id="t-total">R$ 0,00</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="doc-stamp">
+            <span class="stamp-text">Emitido em <span id="stamp-date"></span> — Info Projekt © <span id="stamp-year"></span></span>
+            <span class="status-pill pendente" id="status-pill" onclick="toggleStatus()">● Pendente</span>
+          </div>
+        </div><!-- /doc -->
+
+        <!-- PANEL -->
+        <div class="panel">
+          <div class="panel-card">
+            <h3><i class="ti ti-hash" style="font-size:15px;vertical-align:-2px;margin-right:4px"></i> Numeração</h3>
+            <div class="num-field">
+              <input type="number" id="num-input" min="1" value="1" oninput="updateNum()">
+              <span style="font-size:13px;color:var(--muted)">/</span>
+              <span style="font-size:13px;color:var(--muted)" id="num-year"></span>
+            </div>
+          </div>
+          <div class="panel-card">
+            <h3><i class="ti ti-player-play" style="font-size:15px;vertical-align:-2px;margin-right:4px"></i> Ações</h3>
+            <div class="action-list">
+              <button class="btn primary" onclick="salvarRecibo()"><i class="ti ti-device-floppy"></i> Salvar recibo</button>
+              <button class="btn" onclick="window.print()"><i class="ti ti-printer"></i> Imprimir / PDF</button>
+              <button class="btn danger" onclick="limparForm()"><i class="ti ti-trash"></i> Limpar tudo</button>
+            </div>
+          </div>
+          <div class="panel-card">
+            <h3><i class="ti ti-info-circle" style="font-size:15px;vertical-align:-2px;margin-right:4px"></i> Resumo</h3>
+            <div class="info-row"><span>Itens</span><span id="p-itens">0</span></div>
+            <div class="info-row"><span>Subtotal</span><span id="p-sub">R$ 0,00</span></div>
+            <div class="info-row"><span>Descontos</span><span id="p-desc">R$ 0,00</span></div>
+            <div class="info-row" style="border-top:1px solid var(--border);padding-top:8px;margin-top:4px">
+              <span style="font-weight:600">Total</span>
+              <span id="p-total" style="color:var(--red);font-weight:600">R$ 0,00</span>
+            </div>
+          </div>
+          <div class="tip">
+            <i class="ti ti-bulb"></i>
+            <strong>Dica:</strong> Após salvar, acesse o <em>Histórico</em> para ver e reimprimir qualquer recibo.
+          </div>
+        </div>
+
+      </div><!-- /receipt-grid -->
+    </div>
+
+    <!-- ── CONFIG ── -->
+    <div class="view" id="view-config">
+      <div class="page-header"><div><h1>Configurações</h1><p>Dados da empresa</p></div></div>
+      <div class="card" style="max-width:500px;padding:1.5rem">
+        <p style="font-size:13px;color:var(--muted);line-height:1.7">
+          Os dados abaixo estão fixos no código. Para alterar, edite o arquivo HTML e atualize os trechos com nome, CNPJ, telefone e e-mail da empresa.<br><br>
+          Se quiser que os dados sejam editáveis diretamente aqui, peça para a IA adicionar um formulário de configuração com <code>localStorage</code>.
+        </p>
+        <div style="margin-top:1rem;padding:1rem;background:var(--bg);border-radius:8px;font-size:13px;line-height:2;font-family:'DM Mono',monospace">
+          <strong>Info Projekt</strong><br>
+          CNPJ: 02.410.966/0001-22<br>
+          Praça Dr. Hélio Rocha Guimarães, 101<br>
+          Centro — (33) 3721-1726<br>
+          info.provedor@ipw.com.br
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<script>
+// ── Storage ──────────────────────────────────────────────
+const STORE = 'iprojekt_recibos';
+function load() { try { return JSON.parse(localStorage.getItem(STORE)) || []; } catch(e) { return []; } }
+function save(data) { localStorage.setItem(STORE, JSON.stringify(data)); }
+
+// ── Format ───────────────────────────────────────────────
+function fmt(v) {
+  return 'R$ ' + Number(v).toFixed(2).replace('.', ',').replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+}
+function fmtDate(s) {
+  if (!s) return '—';
+  const [y, m, d] = s.split('-');
+  return d + '/' + m + '/' + y;
+}
+
+// ── Views ────────────────────────────────────────────────
+function showView(v) {
+  document.querySelectorAll('.view').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+  document.getElementById('view-' + v).classList.add('active');
+  const nav = document.getElementById('nav-' + v);
+  if (nav) nav.classList.add('active');
+  if (v === 'dashboard') renderDashboard();
+  if (v === 'historico') renderHistorico();
+}
+
+// ── Items ────────────────────────────────────────────────
+let items = [];
+let rowId = 0;
+let isPago = false;
+
+function addItem() {
+  rowId++;
+  items.push({ id: rowId, qty: 1, desc: '', unit: 0, disc: 0 });
+  renderItems();
+}
+
+function removeItem(id) {
+  items = items.filter(i => i.id !== id);
+  renderItems();
+}
+
+function renderItems() {
+  const body = document.getElementById('items-body');
+  body.innerHTML = '';
+  items.forEach(item => {
+    const row = document.createElement('div');
+    row.className = 'item-row';
+    const total = Math.max(0, item.qty * item.unit - item.disc);
+    row.innerHTML = `
+      <div class="td c">
+        <button class="del-btn" onclick="removeItem(${item.id})" aria-label="Remover">
+          <i class="ti ti-x"></i>
+        </button>
+      </div>
+      <div class="td c">
+        <input type="number" min="1" value="${item.qty}" style="text-align:center;width:42px"
+          oninput="updateField(${item.id},'qty',this.value)">
+      </div>
+      <div class="td">
+        <input type="text" value="${item.desc}" placeholder="Descrição"
+          oninput="updateField(${item.id},'desc',this.value)" style="width:100%">
+      </div>
+      <div class="td r">
+        <input type="number" min="0" step="0.01" value="${item.unit || ''}" placeholder="0,00"
+          style="text-align:right;width:95px"
+          oninput="updateField(${item.id},'unit',this.value)">
+      </div>
+      <div class="td r">
+        <input type="number" min="0" step="0.01" value="${item.disc || ''}" placeholder="0,00"
+          style="text-align:right;width:80px"
+          oninput="updateField(${item.id},'disc',this.value)">
+      </div>
+      <div class="td r row-total" id="rt-${item.id}">${fmt(total)}</div>
+    `;
+    body.appendChild(row);
+  });
+  calcTotals();
+}
+
+function updateField(id, field, val) {
+  const item = items.find(i => i.id === id);
+  if (!item) return;
+  if (field === 'qty') item.qty = Math.max(1, parseInt(val) || 1);
+  else if (field === 'unit') item.unit = parseFloat(val) || 0;
+  else if (field === 'disc') item.disc = parseFloat(val) || 0;
+  else item[field] = val;
+  const el = document.getElementById('rt-' + id);
+  if (el) el.textContent = fmt(Math.max(0, item.qty * item.unit - item.disc));
+  calcTotals();
+}
+
+function calcTotals() {
+  let sub = 0, desc = 0;
+  items.forEach(i => { sub += i.qty * i.unit; desc += i.disc; });
+  const total = Math.max(0, sub - desc);
+  document.getElementById('t-sub').textContent = fmt(sub);
+  document.getElementById('t-desc').textContent = '– ' + fmt(desc);
+  document.getElementById('t-total').textContent = fmt(total);
+  document.getElementById('p-sub').textContent = fmt(sub);
+  document.getElementById('p-desc').textContent = fmt(desc);
+  document.getElementById('p-total').textContent = fmt(total);
+  document.getElementById('p-itens').textContent = items.length;
+}
+
+// ── Status ───────────────────────────────────────────────
+function toggleStatus() {
+  isPago = !isPago;
+  const el = document.getElementById('status-pill');
+  el.className = 'status-pill ' + (isPago ? 'pago' : 'pendente');
+  el.textContent = isPago ? '● Pago' : '● Pendente';
+}
+
+// ── Numeração ─────────────────────────────────────────────
+function getNextNum() {
+  const recs = load();
+  if (!recs.length) return 1;
+  const nums = recs.map(r => parseInt(r.num) || 0);
+  return Math.max(...nums) + 1;
+}
+
+function updateNum() {
+  const v = document.getElementById('num-input').value;
+  const y = document.getElementById('num-year').textContent;
+  document.getElementById('doc-num').textContent = 'Nº ' + String(v).padStart(3, '0') + '/' + y;
+}
+
+// ── Novo recibo ───────────────────────────────────────────
+function novoRecibo() {
+  items = []; rowId = 0; isPago = false;
+  const today = new Date();
+  document.getElementById('f-data').value = today.toISOString().slice(0, 10);
+  document.getElementById('f-cliente').value = '';
+  document.getElementById('f-end').value = '';
+  document.getElementById('f-obs').value = '';
+  document.querySelectorAll('.pay-chip').forEach(c => c.classList.remove('on'));
+  document.getElementById('status-pill').className = 'status-pill pendente';
+  document.getElementById('status-pill').textContent = '● Pendente';
+  const year = today.getFullYear();
+  const num = getNextNum();
+  document.getElementById('num-input').value = num;
+  document.getElementById('num-year').textContent = year;
+  document.getElementById('doc-num').textContent = 'Nº ' + String(num).padStart(3, '0') + '/' + year;
+  document.getElementById('stamp-date').textContent = today.toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' });
+  document.getElementById('stamp-year').textContent = year;
+  renderItems(); addItem();
+}
+
+// ── Salvar ────────────────────────────────────────────────
+function salvarRecibo() {
+  const cliente = document.getElementById('f-cliente').value.trim();
+  if (!cliente) { alert('Informe o nome do cliente.'); return; }
+  let sub = 0, desc = 0;
+  items.forEach(i => { sub += i.qty * i.unit; desc += i.disc; });
+  const total = Math.max(0, sub - desc);
+  const pagamentos = [...document.querySelectorAll('.pay-chip.on')].map(c => c.dataset.v).join(', ') || '—';
+  const num = parseInt(document.getElementById('num-input').value) || 1;
+  const year = new Date().getFullYear();
+  const rec = {
+    id: Date.now(),
+    num, year,
+    label: 'Nº ' + String(num).padStart(3, '0') + '/' + year,
+    data: document.getElementById('f-data').value,
+    cliente,
+    endereco: document.getElementById('f-end').value,
+    obs: document.getElementById('f-obs').value,
+    pagamentos,
+    items: JSON.parse(JSON.stringify(items)),
+    sub, desc, total,
+    status: isPago ? 'pago' : 'pendente',
+    criadoEm: new Date().toISOString()
+  };
+  const recs = load();
+  const existing = recs.findIndex(r => r.num === num && r.year === year);
+  if (existing >= 0) {
+    if (!confirm('Já existe um recibo ' + rec.label + '. Substituir?')) return;
+    recs[existing] = rec;
+  } else {
+    recs.unshift(rec);
+  }
+  save(recs);
+  updateBadge();
+  alert('Recibo ' + rec.label + ' salvo com sucesso!');
+  showView('historico');
+}
+
+// ── Histórico ─────────────────────────────────────────────
+function renderHistorico() {
+  const recs = load();
+  const q = (document.getElementById('search-input')?.value || '').toLowerCase();
+  const filtered = q ? recs.filter(r => r.cliente.toLowerCase().includes(q) || r.label.includes(q)) : recs;
+  const el = document.getElementById('historico-list');
+  if (!filtered.length) {
+    el.innerHTML = '<div class="empty-state"><i class="ti ti-receipt-off"></i>Nenhum recibo encontrado</div>';
+    return;
+  }
+  el.innerHTML = `
+    <table>
+      <thead>
+        <tr>
+          <th>Recibo</th><th>Data</th><th>Cliente</th><th>Pagamento</th><th style="text-align:right">Total</th><th>Status</th><th></th>
+        </tr>
+      </thead>
+      <tbody>
+        ${filtered.map(r => `
+          <tr onclick="abrirRecibo(${r.id})">
+            <td style="font-family:'DM Mono',monospace;font-size:12px">${r.label}</td>
+            <td>${fmtDate(r.data)}</td>
+            <td style="font-weight:500">${r.cliente}</td>
+            <td style="color:var(--muted);font-size:12px">${r.pagamentos}</td>
+            <td style="text-align:right;font-family:'DM Mono',monospace;color:var(--red);font-weight:500">${fmt(r.total)}</td>
+            <td><span class="pill ${r.status}">${r.status === 'pago' ? '● Pago' : '● Pendente'}</span></td>
+            <td>
+              <button class="btn" style="padding:4px 10px;font-size:12px" onclick="event.stopPropagation();deletarRecibo(${r.id})">
+                <i class="ti ti-trash"></i>
+              </button>
+            </td>
+          </tr>
+        `).join('')}
+      </tbody>
+    </table>
+  `;
+}
+
+function abrirRecibo(id) {
+  const recs = load();
+  const rec = recs.find(r => r.id === id);
+  if (!rec) return;
+  showView('novo');
+  items = rec.items.map(i => ({ ...i }));
+  rowId = Math.max(...items.map(i => i.id), 0);
+  isPago = rec.status === 'pago';
+  document.getElementById('f-data').value = rec.data;
+  document.getElementById('f-cliente').value = rec.cliente;
+  document.getElementById('f-end').value = rec.endereco;
+  document.getElementById('f-obs').value = rec.obs;
+  document.getElementById('num-input').value = rec.num;
+  document.getElementById('num-year').textContent = rec.year;
+  document.getElementById('doc-num').textContent = rec.label;
+  document.getElementById('status-pill').className = 'status-pill ' + rec.status;
+  document.getElementById('status-pill').textContent = rec.status === 'pago' ? '● Pago' : '● Pendente';
+  const d = new Date();
+  document.getElementById('stamp-date').textContent = d.toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' });
+  document.getElementById('stamp-year').textContent = rec.year;
+  document.querySelectorAll('.pay-chip').forEach(c => {
+    c.classList.toggle('on', rec.pagamentos.includes(c.dataset.v));
+  });
+  renderItems();
+}
+
+function deletarRecibo(id) {
+  if (!confirm('Excluir este recibo? Esta ação não pode ser desfeita.')) return;
+  const recs = load().filter(r => r.id !== id);
+  save(recs);
+  updateBadge();
+  renderHistorico();
+}
+
+// ── Dashboard ─────────────────────────────────────────────
+function renderDashboard() {
+  const recs = load();
+  let total = 0, pago = 0, pend = 0, cPago = 0, cPend = 0;
+  recs.forEach(r => {
+    total += r.total;
+    if (r.status === 'pago') { pago += r.total; cPago++; }
+    else { pend += r.total; cPend++; }
+  });
+  document.getElementById('stat-total').textContent = fmt(total);
+  document.getElementById('stat-total-sub').textContent = recs.length + ' recibo' + (recs.length !== 1 ? 's' : '');
+  document.getElementById('stat-pago').textContent = fmt(pago);
+  document.getElementById('stat-pago-sub').textContent = cPago + ' recibo' + (cPago !== 1 ? 's' : '');
+  document.getElementById('stat-pend').textContent = fmt(pend);
+  document.getElementById('stat-pend-sub').textContent = cPend + ' recibo' + (cPend !== 1 ? 's' : '');
+  const ultimo = recs.length ? recs.reduce((a, b) => a.num > b.num ? a : b) : null;
+  document.getElementById('stat-num').textContent = ultimo ? ultimo.label : '—';
+  const recent = recs.slice(0, 5);
+  const el = document.getElementById('dashboard-list');
+  if (!recent.length) {
+    el.innerHTML = '<div class="empty-state"><i class="ti ti-receipt-off"></i>Nenhum recibo ainda. Crie o primeiro!</div>';
+    return;
+  }
+  el.innerHTML = `
+    <table>
+      <thead><tr><th>Recibo</th><th>Data</th><th>Cliente</th><th style="text-align:right">Total</th><th>Status</th></tr></thead>
+      <tbody>
+        ${recent.map(r => `
+          <tr onclick="abrirRecibo(${r.id})" title="Clique para abrir">
+            <td style="font-family:'DM Mono',monospace;font-size:12px">${r.label}</td>
+            <td>${fmtDate(r.data)}</td>
+            <td style="font-weight:500">${r.cliente}</td>
+            <td style="text-align:right;font-family:'DM Mono',monospace;color:var(--red);font-weight:500">${fmt(r.total)}</td>
+            <td><span class="pill ${r.status}">${r.status === 'pago' ? '● Pago' : '● Pendente'}</span></td>
+          </tr>
+        `).join('')}
+      </tbody>
+    </table>
+  `;
+}
+
+function updateBadge() {
+  const n = load().length;
+  document.getElementById('badge-count').textContent = n;
+}
+
+function limparForm() {
+  if (confirm('Limpar todos os campos?')) novoRecibo();
+}
+
+// ── Init ──────────────────────────────────────────────────
+updateBadge();
+renderDashboard();
+</script>
+</body>
+</html>
